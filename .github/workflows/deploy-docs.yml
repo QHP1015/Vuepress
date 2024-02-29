@@ -1,0 +1,38 @@
+name: 部署文档
+
+on:
+  push:
+    branches:
+      # 确保这是你正在使用的分支名称
+      - main
+
+jobs:
+  deploy-gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建文档
+        run: npm run docs:build
+
+      - name: copy dist file with scp # 动作的名字
+        uses: appleboy/scp-action@master #调用 scp-action 同步文件
+        with: #参数
+          host: ${{ secrets.SERVER_IP }} #服务器地址
+          username: ${{ secrets.USERNAME }} #登录用户名
+          password: ${{ secrets.PASSWORD }} #登录用户密码
+          port: ${{ secrets.PORT }} #服务器端口号
+          source: 'docs/.vuepress/dist/' #指定需要复制的路径
+          target: ${{ secrets.TARGET }} #服务器接受文件的路径
+          strip_components: 3
